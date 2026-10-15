@@ -1,5 +1,5 @@
 // 作業署名アプリ デモ: オフライン用 Service Worker
-const VERSION = 'sign-demo-v1';
+const VERSION = 'sign-demo-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
