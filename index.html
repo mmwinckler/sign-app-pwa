@@ -241,7 +241,7 @@ function ipadHTML(){
     if(sel.status==='doing')hint=sel.start.time+' に開始済みです。本日の作業が終わったら「終了」を押してください';
     if(sel.status==='done')hint='この現場の本日の作業は終了済みです';
     body=`<div class="scr-body" style="padding:32px 36px;display:flex;flex-direction:column;gap:24px">
-      <div style="display:flex;align-items:baseline;gap:14px"><h1 style="margin:0;font-size:28px;font-weight:700">本日の現場</h1><div style="font-size:18px;color:#4A5668">${mine().length}件　カレンダー予定から表示</div></div>
+      <div style="display:flex;align-items:baseline;gap:14px"><h1 style="margin:0;font-size:28px;font-weight:700">本日の現場</h1><div style="font-size:18px;color:#4A5668">${mine().length}件　PMEカレンダーから表示</div></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px">${cards}</div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:4px">
         <div style="font-size:19px;color:#39414D">選択中：<strong style="color:#14243B">${esc(sel.customer)} ${esc(sel.site)}</strong></div>
