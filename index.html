@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>作業署名</title>
+<meta name="theme-color" content="#14243B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="作業署名">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: デモ切替バー＋（iPadフレームを画面幅に合わせて縮小表示 / 社内閲覧画面はフルード） */
+:root{
+  --navy:#14243B; --navy2:#24364F; --blue:#1D4F9C; --green:#17663F; --orange:#E07B1A;
+  --stage:#DFE3E8; --paper:#F3F5F8; --cust:#FBF8F1; --custInk:#1E1A14;
+  --font:'IBM Plex Sans JP','Hiragino Sans','Yu Gothic UI',sans-serif;
+  --font-cust:'BIZ UDPGothic','Hiragino Sans','Yu Gothic UI',sans-serif;
+  color-scheme:light;
+}
+html,body{background:var(--stage);color:var(--navy)}
+body{margin:0;font-family:var(--font)}
+a{color:var(--blue)}
+*{box-sizing:border-box}
+button,input,textarea,select{font-family:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+
+.demobar{background:var(--navy);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
+.demobar .lbl{color:#fff;font-weight:700;font-size:16px;letter-spacing:.04em}
+.tabs{display:flex;gap:4px;padding:4px;background:var(--navy2);border-radius:10px}
+.tab{height:44px;padding:0 20px;border:0;border-radius:8px;background:transparent;color:#C9D2DC;font-size:15px;font-weight:500}
+.tab.on{background:#fff;color:var(--navy);font-weight:700}
+.chipbtn{height:40px;padding:0 14px;border:1px solid #4A5A70;border-radius:8px;background:transparent;color:#E8EDF2;font-size:14px}
+.chipbtn.on{background:#E8EDF2;color:var(--navy);border-color:#E8EDF2;font-weight:700}
+.spacer{flex:1}
+
+.stagewrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px;overflow:hidden}
+.scaler{margin:0 auto;position:relative}
+.scaler>.ipad{position:absolute;left:0;top:0;transform-origin:0 0}
+.ipad{background:#1B1D21;border-radius:44px;padding:22px;box-shadow:0 30px 60px rgba(20,36,59,.25)}
+.screen{border-radius:22px;overflow:hidden;display:flex;flex-direction:column;background:var(--paper);color:var(--navy);font-family:var(--font)}
+.ipad.land .screen{width:1180px;height:820px}
+.ipad.port .screen{width:820px;height:1180px}
+.scr-body{flex:1;overflow:auto;min-height:0}
+.site{display:flex;flex-direction:column;gap:10px;text-align:left;padding:22px 24px;border:2px solid #C5CDD7;border-radius:14px;background:#fff;color:var(--navy);min-height:200px}
+.site.sel{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy)}
+.pill{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:16px;font-size:15px;font-weight:700;white-space:nowrap}
+.b-todo{background:#E4E7EB;color:#39414D}
+.b-doing{background:#D9E6FA;color:#153C7A}
+.b-done{background:#D6EEDF;color:#134A2E}
+.bigbtn{width:340px;height:190px;border:0;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff}
+.bigbtn.start{background:var(--blue)}
+.bigbtn.end{background:var(--green)}
+.bigbtn:disabled{background:#DADFE5;color:#5C6470;cursor:not-allowed}
+.pbtn{height:72px;padding:0 36px;border:0;border-radius:14px;font-size:22px;font-weight:700;color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:12px}
+.pbtn.start{background:var(--blue)}
+.pbtn.end{background:var(--green)}
+.pbtn.navy{background:var(--navy)}
+.pbtn:disabled{background:#DADFE5;color:#5C6470;cursor:not-allowed}
+.gbtn{height:56px;padding:0 22px;border:2px solid #9AA6B5;border-radius:12px;background:#fff;color:var(--navy);font-size:18px;font-weight:500;display:inline-flex;align-items:center;gap:8px}
+.ta{width:100%;min-height:280px;padding:20px 22px;border:2px solid #9AA6B5;border-radius:14px;background:#fff;color:var(--navy);font-size:24px;line-height:1.7;resize:vertical}
+.ta:focus{border-color:var(--blue)}
+.cust{font-family:var(--font-cust);background:var(--cust);color:var(--custInk)}
+.cin{width:100%;height:68px;padding:0 20px;border:2px solid #8C8273;border-radius:12px;background:#fff;color:var(--custInk);font-size:26px}
+.pad{display:block;width:100%;height:240px;border:2px dashed #8C8273;border-radius:12px;background:#fff;touch-action:none;cursor:crosshair}
+.done-ic{width:112px;height:112px;border-radius:56px;display:flex;align-items:center;justify-content:center;background:var(--blue)}
+.done-ic.end{background:var(--green)}
+.linkbtn{border:0;background:transparent;padding:0;color:var(--blue);font-size:14px;font-weight:700;text-align:left;text-decoration:underline;text-underline-offset:3px}
+
+/* 閲覧側 */
+.viewer{max-width:1280px;margin:0 auto;background:#F5F6F8;border-radius:12px;overflow:hidden;box-shadow:0 24px 50px rgba(20,36,59,.18);display:flex;flex-direction:column;color:#1F2A37;min-height:600px}
+.portal{min-height:52px;background:#2F3B4C;color:#fff;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 24px;font-size:14px}
+.apphead{background:#fff;border-bottom:1px solid #DCE1E7;padding:18px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.vbody{padding:20px 24px;display:flex;flex-direction:column;gap:16px}
+.filters{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:14px 16px;background:#fff;border:1px solid #DCE1E7;border-radius:8px}
+.filters .f{display:flex;flex-direction:column;gap:4px}
+.tablebox{background:#fff;border:1px solid #DCE1E7;border-radius:8px;overflow-x:auto}
+.row{display:grid;grid-template-columns:56px 110px minmax(180px,1.3fr) minmax(220px,1.6fr) 130px 120px 90px 90px;align-items:center;min-height:56px;border-bottom:1px solid #E1E5EA;font-size:14px}
+.row.head{min-height:44px;background:#F1F3F6;color:#4A5463;font-weight:700;font-size:13px;border-bottom:1px solid #CBD2DA}
+.row>*{padding:0 12px}
+.row.new{animation:flash 1.6s ease-out}
+@keyframes flash{from{background:#FFF3D6}to{background:transparent}}
+@media (prefers-reduced-motion:reduce){.row.new{animation:none}}
+.iconbtn{width:36px;height:36px;margin-left:10px;padding:0;border:1px solid #C5CDD7;border-radius:8px;background:#fff;color:#2D5FA8;display:inline-flex;align-items:center;justify-content:center}
+.sel-f{height:40px;padding:0 12px;border:1px solid #AEB8C4;border-radius:6px;background:#fff;color:#1F2A37;font-size:14px}
+.fl{font-size:12px;color:#5A6472;font-weight:500}
+.fv{font-size:16px;color:#1F2A37;margin-top:4px;white-space:pre-wrap;line-height:1.6}
+.card{background:#fff;border:1px solid #DCE1E7;border-radius:8px;padding:20px 24px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 28px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.sigbox{width:220px;max-width:100%;height:88px;margin-top:4px;border:1px solid #DCE1E7;border-radius:6px;background:#FAFBFC;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.sigbox img{width:100%;height:100%;object-fit:contain}
+.sigrow{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:flex-start}
+@media (max-width:820px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:1fr}}
+@media (max-width:480px){.grid3{grid-template-columns:1fr}.vbody,.apphead,.portal{padding-left:14px;padding-right:14px}}
+.note{max-width:1280px;margin:12px auto 0;font-size:13px;color:#4A5668}
+
+/* PWA（ホーム画面から起動）: 枠なし全画面 */
+body.standalone .demobar{padding-top:max(12px,env(safe-area-inset-top,0px))}
+body.standalone .stagewrap.ipadwrap{padding:0}
+body.standalone .scaler{width:100%!important;height:auto!important}
+body.standalone .scaler>.ipad{position:static;transform:none!important;padding:0;border-radius:0;box-shadow:none;background:none}
+body.standalone .ipad .screen{width:100%!important;height:var(--appH,100vh)!important;border-radius:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+body.standalone .orient{display:none!important}
+.offline{color:#F2C27A;font-size:13px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+const TODAY='2026-10-15', ME='佐藤 健一', KEY='sign-demo-v1';
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function initialRecords(){return [
+ {id:'r1',no:'1021',date:'2026-10-15',customer:'東和精機株式会社',site:'第二工場',address:'神奈川県綾瀬市深谷中4-12-8',machine:'Hollerbeck HZ-450 CNC旋盤',plan:'09:00〜12:00',worker:'佐藤 健一',status:'todo',start:null,end:null,
+  sTodo:'据付後の試運転と立会い。\n主軸・刃物台の動作確認、試験片2本の切削テスト、操作説明（約1時間）。',
+  sDone:'試運転・切削テスト完了（試験片2本とも寸法公差内）。\n操作説明を実施（参加者3名）。\nクーラント液面センサーの調整は次回訪問時に対応。'},
+ {id:'r2',no:'1022',date:'2026-10-15',customer:'北川化成株式会社',site:'相模原工場',address:'神奈川県相模原市中央区田名3-9-21',machine:'Wendermann PX-220 サーボプレス',plan:'13:30〜17:00',worker:'佐藤 健一',status:'todo',start:null,end:null,
+  sTodo:'サーボプレスの定期保守。\nスライド平行度の測定、潤滑系統の点検・グリス補充、光線式安全装置の作動確認。',
+  sDone:'平行度測定・潤滑点検完了、測定値は基準内。\n光線式安全装置の作動確認済み。\n油圧ホース1本に軽微なにじみあり、交換部品を手配予定。'},
+ {id:'r3',no:'1023',date:'2026-10-15',customer:'三ツ星金属工業株式会社',site:'本社工場',address:'愛知県小牧市大字村中1180',machine:'Kraulich LF-3015 ファイバーレーザー加工機',plan:'08:30〜15:00',worker:'田中 誠',status:'doing',
+  start:{todo:'6か月定期点検。\nレーザー発振器の出力確認、加工ヘッドの保護ガラス交換、アシストガス配管のリークチェック。',signer:'山口 浩二',sig:'',dummy:'A',time:'08:42'},end:null},
+ {id:'r4',no:'1024',date:'2026-10-15',customer:'大和パッケージ株式会社',site:'厚木工場',address:'神奈川県厚木市上依知2-5-3',machine:'Steinfeld BM-800 横形マシニングセンタ',plan:'08:30〜12:00',worker:'鈴木 大輔',status:'done',
+  start:{todo:'主軸異音の調査。\n主軸ベアリングの状態確認と、交換見積用の測定データ取得。',signer:'小林 恵',sig:'',dummy:'B',time:'08:31'},
+  end:{todo:'主軸ベアリングの振動測定を実施。前側ベアリングに摩耗兆候あり、交換を推奨。\n測定データを持ち帰り、後日見積を提出予定。\n当日は通常運転できる状態に復旧済み。',signer:'小林 恵',sig:'',dummy:'B',time:'11:46'}},
+ {id:'r5',no:'1025',date:'2026-10-15',customer:'中部精工株式会社',site:'春日井工場',address:'愛知県春日井市西屋町2-17',machine:'Hollerbeck HZ-300 CNC旋盤',plan:'15:30〜17:30',worker:'田中 誠',status:'todo',start:null,end:null},
+ {id:'r6',no:'1019',date:'2026-10-14',customer:'北川化成株式会社',site:'相模原工場',address:'神奈川県相模原市中央区田名3-9-21',machine:'Wendermann PX-220 サーボプレス',plan:'13:00〜16:00',worker:'鈴木 大輔',status:'done',
+  start:{todo:'下見と保守計画の打合せ。',signer:'森 直樹',sig:'',dummy:'A',time:'13:05'},
+  end:{todo:'現状確認と打合せ完了。翌日の定期保守内容を確定。',signer:'森 直樹',sig:'',dummy:'B',time:'15:20'}}
+];}
+function initialState(){return {mode:'ipad',orient:'land',screen:'home',selId:'r1',draft:'',signer:'',hasInk:false,lastSig:'',lastTime:'',lastSigner:'',vScreen:'list',detailId:null,fDate:TODAY,fStatus:'all',fWorker:'all',records:initialRecords(),flashId:null};}
+
+let st;
+try{const raw=localStorage.getItem(KEY); st=raw?Object.assign(initialState(),JSON.parse(raw)):initialState();}catch(e){st=initialState();}
+if(st.screen.indexOf('Sign')>0){st.screen=st.screen.replace('Sign','Input');st.hasInk=false;}
+function save(){try{const c=Object.assign({},st);delete c.hasInk;delete c.flashId;localStorage.setItem(KEY,JSON.stringify(c));}catch(e){}}
+function set(p){Object.assign(st,p);save();render();}
+
+const now=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');};
+const statusLabel=s=>s==='doing'?'作業中':s==='done'?'終了済み':'未開始';
+const pillCls=s=>'pill '+(s==='doing'?'b-doing':s==='done'?'b-done':'b-todo');
+const dateLabel=d=>d==='2026-10-15'?'2026-10-15（木）':'2026-10-14（水）';
+const nl=s=>esc(s);
+
+const IC={
+ logo:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-4 5 2 8-2s4-6 7-3"></path><path d="M3 21h18"></path></svg>',
+ machine:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="12" rx="2"></rect><path d="M7 7V4h10v3"></path><circle cx="12" cy="13" r="2.5"></circle></svg>',
+ play:'<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M10 8l6 4-6 4z"></path></svg>',
+ check:'<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 12.5l2.8 2.8L16.5 9.5"></path></svg>',
+ back:(s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>`,
+ next:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>',
+ mic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D4F9C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg>',
+ redo:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"></path><path d="M4 4v4h4"></path></svg>',
+ ok:'<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>',
+ doc:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h7M9 16h5"></path></svg>',
+ dummyA:'<svg width="190" height="70" viewBox="0 0 240 80" fill="none" stroke="#1A1A1A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="署名"><path d="M14 52c10-30 22-34 26-18s-6 30 4 22 14-34 22-30-4 30 6 28 12-20 20-22 2 18 10 20 16-24 26-26"></path><path d="M150 30c-8 14-6 28 6 22s18-26 28-20-8 24 4 22 20-16 36-14"></path></svg>',
+ dummyB:'<svg width="190" height="70" viewBox="0 0 240 80" fill="none" stroke="#1A1A1A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="署名"><path d="M20 40c14-22 30-22 26 0s-16 26 0 18 20-36 32-30-10 34 4 30 24-28 34-24"></path><path d="M134 54c6-26 16-32 22-24s-10 24 2 22 22-30 30-26 0 22 12 20 14-10 22-12"></path></svg>'
+};
+
+function updateRecord(id,patch){st.records=st.records.map(r=>r.id===id?Object.assign({},r,patch):r);}
+function mine(){return st.records.filter(r=>r.worker===ME&&r.date===TODAY);}
+function selRec(){return st.records.find(r=>r.id===st.selId)||mine()[0];}
+const isStartFlow=()=>st.screen.indexOf('start')===0;
+
+/* ---------- 署名アプリ（iPad） ---------- */
+function ipadHTML(){
+  const scr=st.screen, sel=selRec(), sf=isStartFlow();
+  const isSign=scr==='startSign'||scr==='endSign';
+  let head='';
+  if(!isSign){
+    head=`<div style="height:76px;flex-shrink:0;background:#14243B;color:#fff;display:flex;align-items:center;gap:16px;padding:0 32px">${IC.logo}<div style="font-size:20px;font-weight:700">作業署名</div><div class="spacer"></div><div style="font-size:18px">2026年10月15日（木）</div><div style="width:1px;height:28px;background:#3E5068"></div><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:20px;background:#E8EDF2;color:#14243B;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">佐藤</div><div style="font-size:18px;font-weight:500">佐藤 健一</div></div></div>`;
+  }else{
+    head=`<div class="cust" style="height:76px;flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 32px;background:#EFE7D6;border-bottom:1px solid #D9CDB5"><div style="height:38px;padding:0 16px;border-radius:19px;background:#1E1A14;color:#FBF8F1;display:flex;align-items:center;font-size:17px;font-weight:700">お客様ご確認画面</div><div class="spacer"></div><div style="font-size:18px">作業担当　佐藤 健一</div></div>`;
+  }
+  let body='';
+  if(scr==='home'){
+    const cards=mine().map(r=>{
+      let t='未開始';
+      if(r.status==='doing')t='作業中（'+r.start.time+'〜）';
+      if(r.status==='done')t='終了済み（'+r.start.time+'〜'+r.end.time+'）';
+      const on=r.id===sel.id;
+      return `<button class="site${on?' sel':''}" data-act="pick" data-id="${r.id}" aria-pressed="${on}">
+        <span style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%"><span style="font-size:17px;color:#4A5668;font-weight:500">予定 ${esc(r.plan)}</span><span class="${pillCls(r.status)}">${t}</span></span>
+        <span style="font-size:25px;font-weight:700;line-height:1.35">${esc(r.customer)} ${esc(r.site)}</span>
+        <span style="font-size:17px;color:#39414D">${esc(r.address)}</span>
+        <span style="display:flex;align-items:center;gap:8px;font-size:17px;color:#14243B">${IC.machine}${esc(r.machine)}</span></button>`;
+    }).join('');
+    let hint='';
+    if(sel.status==='todo')hint='現場に到着したら「開始」を押してください';
+    if(sel.status==='doing')hint=sel.start.time+' に開始済みです。本日の作業が終わったら「終了」を押してください';
+    if(sel.status==='done')hint='この現場の本日の作業は終了済みです';
+    body=`<div class="scr-body" style="padding:32px 36px;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;align-items:baseline;gap:14px"><h1 style="margin:0;font-size:28px;font-weight:700">本日の現場</h1><div style="font-size:18px;color:#4A5668">${mine().length}件　カレンダー予定から表示</div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px">${cards}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:4px">
+        <div style="font-size:19px;color:#39414D">選択中：<strong style="color:#14243B">${esc(sel.customer)} ${esc(sel.site)}</strong></div>
+        <div style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center">
+          <button class="bigbtn start" data-act="goStart" ${sel.status!=='todo'?'disabled':''}>${IC.play}<span style="font-size:44px;font-weight:700;line-height:1">開始</span><span style="font-size:17px">作業内容の確認・署名</span></button>
+          <button class="bigbtn end" data-act="goEnd" ${sel.status!=='doing'?'disabled':''}>${IC.check}<span style="font-size:44px;font-weight:700;line-height:1">終了</span><span style="font-size:17px">本日の作業終了の了承</span></button>
+        </div>
+        <div style="font-size:17px;color:#4A5668">${hint}</div>
+      </div></div>`;
+  }else if(scr==='startInput'||scr==='endInput'){
+    const endBox=scr==='endInput'?`<div style="padding:18px 22px;border-radius:12px;background:#E6EAF0"><div style="font-size:15px;font-weight:700;color:#39414D">朝の「今日やること」（${esc(sel.start.time)} 開始・${esc(sel.start.signer)} 様 署名済み）</div><div style="font-size:19px;line-height:1.7;margin-top:6px;white-space:pre-wrap">${nl(sel.start.todo)}</div></div>`:'';
+    body=`<div class="scr-body" style="padding:28px 36px;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><button class="gbtn" data-act="goHome">${IC.back(20)}ホーム</button><div class="${sf?'pill b-doing':'pill b-done'}">${sf?'開始　1 / 2　今日やること':'終了　1 / 2　今日やったこと'}</div><div style="font-size:17px;color:#4A5668">${esc(sel.customer)} ${esc(sel.site)}｜${esc(sel.machine)}</div></div>
+      ${endBox}
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label for="draft" style="font-size:26px;font-weight:700">${sf?'今日やること':'今日やったこと'}</label>
+        <textarea id="draft" class="ta" placeholder="${sf?'本日の作業内容を入力してください（音声入力も使えます）':'本日実施した作業・残件を入力してください（音声入力も使えます）'}">${esc(st.draft)}</textarea>
+        <div style="display:flex;align-items:center;gap:10px;font-size:17px;color:#39414D">${IC.mic}マイクで音声入力できます（キーボードのマイクボタンを押して話してください）</div>
+      </div>
+      <div class="spacer"></div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <button class="gbtn" style="font-size:15px;height:48px;border-style:dashed" data-act="fillSample">デモ用の例文を入れる</button>
+        <div class="spacer"></div>
+        <button id="nextBtn" class="${sf?'pbtn start':'pbtn end'}" data-act="goSign" ${st.draft.trim()===''?'disabled':''}>次へ：お客様の確認${IC.next}</button>
+      </div></div>`;
+  }else if(isSign){
+    const todo=sf?st.draft:sel.start.todo;
+    const done=!sf?`<div style="padding:18px 22px;background:#fff;border:2px solid #17663F;border-radius:12px"><div style="font-size:17px;font-weight:700;color:#17663F">今日やったこと</div><div style="font-size:22px;line-height:1.75;margin-top:6px;white-space:pre-wrap">${nl(st.draft)}</div></div>`:'';
+    body=`<div class="scr-body cust" style="padding:28px 36px;display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;flex-direction:column;gap:6px"><h1 style="margin:0;font-size:34px;font-weight:700;line-height:1.3">${sf?'本日の作業内容をご確認ください':'本日の作業終了をご了承ください'}</h1><div style="font-size:19px;color:#4F4638;line-height:1.6">${sf?'下記の内容で本日の作業を始めます。よろしければお名前とご署名をお願いします。':'本日の作業を終了したことのご確認です（検収や完了確認ではありません）。お名前とご署名をお願いします。'}</div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+        <div style="flex:1 1 460px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div style="display:grid;grid-template-columns:96px 1fr;row-gap:6px;column-gap:12px;font-size:18px;padding:16px 20px;background:#fff;border:1px solid #D9CDB5;border-radius:12px"><div style="color:#6A5F4E">日付</div><div>2026年10月15日（木）</div><div style="color:#6A5F4E">現場</div><div>${esc(sel.customer)} ${esc(sel.site)}</div><div style="color:#6A5F4E">対象機械</div><div>${esc(sel.machine)}</div></div>
+          <div style="padding:18px 22px;background:#fff;border:1px solid #D9CDB5;border-radius:12px"><div style="font-size:17px;font-weight:700;color:#6A5F4E">今日やること</div><div style="font-size:22px;line-height:1.75;margin-top:6px;white-space:pre-wrap">${nl(todo)}</div></div>
+          ${done}
+        </div>
+        <div style="flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:14px">
+          <label for="signer" style="font-size:19px;font-weight:700">ご署名者のお名前</label>
+          <input id="signer" class="cin" value="${esc(st.signer)}" placeholder="例：山田 太郎" autocomplete="off">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:6px"><div style="font-size:19px;font-weight:700">手書きのご署名</div><button class="gbtn" style="height:48px;font-size:17px;border-color:#8C8273;color:#1E1A14" data-act="clearPad">${IC.redo}書き直す</button></div>
+          <div style="position:relative">
+            <canvas id="pad" class="pad" aria-label="署名欄。指またはApple Pencilで署名してください" role="img"></canvas>
+            <div id="padHint" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:20px;color:#8C8273" ${st.hasInk?'hidden':''}>ここに指またはペンでご署名ください</div>
+            <div style="position:absolute;left:28px;right:28px;bottom:54px;border-bottom:1px solid #D9CDB5;pointer-events:none"></div>
+          </div>
+          <button id="submitBtn" class="${sf?'pbtn start':'pbtn end'}" style="width:100%;margin-top:6px" data-act="submitSign" disabled>${sf?'確認して署名する':'了承して署名する'}</button>
+          <button class="linkbtn" style="align-self:center;font-size:16px;color:#4F4638;padding:12px" data-act="backToInput">作業員に戻す（内容を修正）</button>
+        </div>
+      </div></div>`;
+  }else{
+    body=`<div class="scr-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:40px">
+      <div class="${sf?'done-ic':'done-ic end'}">${IC.ok}</div>
+      <h1 style="margin:0;font-size:38px;font-weight:700">${sf?'作業を開始しました':'本日の作業を終了しました'}</h1>
+      <div style="font-size:20px;color:#39414D">${esc(sel.customer)} ${esc(sel.site)}</div>
+      <div style="display:flex;gap:40px;align-items:stretch;flex-wrap:wrap;justify-content:center;padding:24px 32px;background:#fff;border-radius:16px;border:1px solid #D3D9E0">
+        <div style="display:flex;flex-direction:column;justify-content:center;gap:4px"><div style="font-size:16px;color:#4A5668">${sf?'開始時刻':'終了時刻'}</div><div style="font-size:52px;font-weight:700;letter-spacing:.02em">${esc(st.lastTime)}</div></div>
+        <div style="width:1px;background:#D3D9E0"></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><div style="font-size:16px;color:#4A5668">ご署名（${esc(st.lastSigner)} 様）</div>${st.lastSig?`<img src="${st.lastSig}" alt="署名のサムネイル" style="width:260px;height:104px;object-fit:contain;border:1px solid #D3D9E0;border-radius:8px;background:#FAFBFC">`:''}</div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+        <button class="pbtn navy" style="min-width:320px" data-act="goHome">ホームに戻る</button>
+        <button class="gbtn" style="height:72px" data-act="openInViewer">閲覧側で記録を見る</button>
+      </div></div>`;
+  }
+  const W=st.orient==='land'?1224:864, H=st.orient==='land'?864:1224;
+  return `<div class="stagewrap ipadwrap"><div class="scaler" id="scaler" data-w="${W}" data-h="${H}"><div class="ipad ${st.orient}" id="ipad"><div class="screen">${head}${body}</div></div></div></div>`;
+}
+
+/* ---------- 閲覧側 ---------- */
+function sigCell(e,label){
+  if(!e)return '<span style="font-size:13px;color:#5A6472">未記録</span>';
+  if(e.sig)return `<img src="${e.sig}" alt="${label}">`;
+  return e.dummy==='A'?IC.dummyA:IC.dummyB;
+}
+function viewerHTML(){
+  let inner='';
+  if(st.vScreen==='list'){
+    const day=st.records.filter(r=>r.date===st.fDate);
+    const f=day.filter(r=>(st.fStatus==='all'||r.status===st.fStatus)&&(st.fWorker==='all'||r.worker===st.fWorker));
+    const opt=(v,l,cur)=>`<option value="${v}" ${v===cur?'selected':''}>${l}</option>`;
+    const rows=f.map(r=>`<div class="row${r.id===st.flashId?' new':''}">
+      <div><button class="iconbtn" data-act="open" data-id="${r.id}" aria-label="詳細を開く">${IC.doc}</button></div>
+      <div style="font-variant-numeric:tabular-nums">${r.date}</div>
+      <div><button class="linkbtn" data-act="open" data-id="${r.id}">${esc(r.customer)}</button></div>
+      <div style="line-height:1.4;padding-top:6px;padding-bottom:6px">${esc(r.site)}<br><span style="font-size:12px;color:#5A6472">${esc(r.address)}</span></div>
+      <div>${esc(r.worker)}</div>
+      <div><span class="${pillCls(r.status)}" style="height:28px;font-size:13px">${statusLabel(r.status)}</span></div>
+      <div style="font-variant-numeric:tabular-nums">${r.start?r.start.time:'—'}</div>
+      <div style="font-variant-numeric:tabular-nums">${r.end?r.end.time:'—'}</div></div>`).join('');
+    inner=`<div class="vbody">
+      <div class="filters">
+        <div class="f"><label class="fl" for="f-view">一覧</label><select id="f-view" class="sel-f" style="min-width:200px"><option>当日の現場別ステータス</option></select></div>
+        <div class="f"><label class="fl" for="f-date">日付</label><select id="f-date" class="sel-f">${opt('2026-10-15','2026-10-15（木）',st.fDate)}${opt('2026-10-14','2026-10-14（水）',st.fDate)}</select></div>
+        <div class="f"><label class="fl" for="f-status">ステータス</label><select id="f-status" class="sel-f">${opt('all','すべて',st.fStatus)}${opt('todo','未開始',st.fStatus)}${opt('doing','作業中',st.fStatus)}${opt('done','終了済み',st.fStatus)}</select></div>
+        <div class="f"><label class="fl" for="f-worker">担当作業員</label><select id="f-worker" class="sel-f">${opt('all','すべて',st.fWorker)}${opt('佐藤 健一','佐藤 健一',st.fWorker)}${opt('田中 誠','田中 誠',st.fWorker)}${opt('鈴木 大輔','鈴木 大輔',st.fWorker)}</select></div>
+        <div class="spacer"></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <span class="pill b-todo" style="height:26px;font-size:13px">未開始 ${day.filter(r=>r.status==='todo').length}</span>
+          <span class="pill b-doing" style="height:26px;font-size:13px">作業中 ${day.filter(r=>r.status==='doing').length}</span>
+          <span class="pill b-done" style="height:26px;font-size:13px">終了済み ${day.filter(r=>r.status==='done').length}</span>
+        </div>
+      </div>
+      <div class="tablebox"><div style="min-width:1060px">
+        <div class="row head"><div></div><div>日付</div><div>客先名</div><div>現場</div><div>担当作業員</div><div>ステータス</div><div>開始時刻</div><div>終了時刻</div></div>
+        ${rows||'<div style="padding:40px;text-align:center;color:#5A6472;font-size:14px">条件に一致するレコードはありません</div>'}
+      </div></div></div>`;
+  }else{
+    const d=st.records.find(r=>r.id===st.detailId)||st.records[0];
+    const half=(title,color,timeLabel,e,textLabel,sigLabel)=>`<div style="background:#fff;border:1px solid #DCE1E7;border-top:4px solid ${color};border-radius:8px;padding:18px 22px;display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div style="font-size:16px;font-weight:700;color:${color}">${title}</div><div style="font-size:13px;color:#5A6472">${timeLabel} <strong style="font-size:18px;color:#1F2A37;font-variant-numeric:tabular-nums">${e?e.time:'—'}</strong></div></div>
+      <div><div class="fl">${textLabel}</div><div class="fv">${e?nl(e.todo):'未記録'}</div></div>
+      <div class="sigrow"><div style="flex:1;min-width:120px"><div class="fl">署名者氏名</div><div class="fv">${e?esc(e.signer)+' 様':'未記録'}</div></div><div><div class="fl">署名</div><div class="sigbox">${sigCell(e,sigLabel)}</div></div></div></div>`;
+    inner=`<div class="vbody">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><button class="sel-f" style="display:inline-flex;align-items:center;gap:6px;font-weight:500" data-act="backList">${IC.back(16)}一覧へ戻る</button><div style="font-size:13px;color:#5A6472">レコード番号 ${d.no}</div><span class="${pillCls(d.status)}" style="height:28px;font-size:13px">${statusLabel(d.status)}</span></div>
+      <div class="card"><div style="font-size:20px;font-weight:700;margin-bottom:16px">${esc(d.customer)} ${esc(d.site)}</div>
+        <div class="grid3">
+          <div><div class="fl">日付</div><div class="fv">${dateLabel(d.date)}</div></div>
+          <div><div class="fl">担当作業員</div><div class="fv">${esc(d.worker)}</div></div>
+          <div><div class="fl">予定時間</div><div class="fv">${esc(d.plan)}</div></div>
+          <div><div class="fl">客先名</div><div class="fv">${esc(d.customer)}</div></div>
+          <div><div class="fl">現場住所</div><div class="fv">${esc(d.address)}</div></div>
+          <div><div class="fl">対象機械</div><div class="fv">${esc(d.machine)}</div></div>
+        </div></div>
+      <div class="grid2">${half('開始','#1D4F9C','開始時刻',d.start,'今日やること','開始時の署名')}${half('終了','#17663F','終了時刻',d.end,'今日やったこと','終了時の署名')}</div>
+    </div>`;
+  }
+  return `<div class="stagewrap"><div class="viewer">
+    <div class="portal"><div style="width:26px;height:26px;border-radius:6px;background:#E8B04A"></div><div style="font-weight:700">社内業務アプリ</div><div style="color:#B9C3CF">›</div><div>現場作業署名</div><div class="spacer"></div><div style="color:#D7DEE6">情報システム課 閲覧</div></div>
+    <div class="apphead"><div style="width:40px;height:40px;border-radius:8px;background:#E5EEF9;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D4F9C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-4 5 2 8-2s4-6 7-3"></path><path d="M3 21h18"></path></svg></div><div style="font-size:20px;font-weight:700">現場作業署名</div><div style="font-size:13px;color:#5A6472">署名アプリの開始・終了記録</div></div>
+    ${inner}</div>
+    <div class="note">署名アプリで開始・終了の署名をすると、この一覧にすぐ反映されます。データはこの端末のブラウザ内にだけ保存されます。</div></div>`;
+}
+
+/* ---------- 描画 ---------- */
+const app=document.getElementById('app');
+function render(){
+  const bar=`<div class="demobar"><div class="lbl">デモ切替</div>
+    <div class="tabs"><button class="tab${st.mode==='ipad'?' on':''}" data-act="showIpad">署名アプリ（iPad）</button><button class="tab${st.mode==='viewer'?' on':''}" data-act="showViewer">閲覧側（社内）</button></div>
+    ${st.mode==='ipad'?`<div class="orient" style="display:flex;align-items:center;gap:8px"><span style="color:#AFBACA;font-size:14px">iPadの向き</span><button class="chipbtn${st.orient==='land'?' on':''}" data-act="setLand">横</button><button class="chipbtn${st.orient==='port'?' on':''}" data-act="setPort">縦</button></div>`:''}
+    <div class="spacer"></div>${navigator.onLine?'':'<span class="offline">オフライン</span>'}<button class="chipbtn" data-act="reset">デモを初期状態に戻す</button></div>`;
+  app.innerHTML=bar+(st.mode==='ipad'?ipadHTML():viewerHTML());
+  fit(); setupPad(); st.flashId=null;
+}
+const STANDALONE=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true||/[?&]app=1/.test(location.search);
+if(STANDALONE)document.body.classList.add('standalone');
+function fit(){
+  const sc=document.getElementById('scaler'); if(!sc)return;
+  if(STANDALONE){const bar=document.querySelector('.demobar');document.documentElement.style.setProperty('--appH',(window.innerHeight-(bar?bar.offsetHeight:0))+'px');return;}
+  const W=+sc.dataset.w,H=+sc.dataset.h, avail=sc.parentElement.clientWidth-parseFloat(getComputedStyle(sc.parentElement).paddingLeft)-parseFloat(getComputedStyle(sc.parentElement).paddingRight);
+  const s=Math.min(1,avail/W);
+  sc.style.width=W*s+'px'; sc.style.height=H*s+'px';
+  document.getElementById('ipad').style.transform='scale('+s+')';
+}
+window.addEventListener('resize',fit);
+window.addEventListener('orientationchange',()=>setTimeout(fit,200));
+window.addEventListener('online',render);window.addEventListener('offline',render);
+
+/* 署名パッド */
+let pad=null,ctx=null,drawing=false,last=null;
+function setupPad(){
+  pad=document.getElementById('pad'); ctx=null; if(!pad)return;
+  const w=pad.offsetWidth||600,h=pad.offsetHeight||240;
+  pad.width=w*2; pad.height=h*2;
+  ctx=pad.getContext('2d'); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#141414'; ctx.lineWidth=5;
+  st.hasInk=false; refreshSubmit();
+  const pt=e=>{const r=pad.getBoundingClientRect();return [(e.clientX-r.left)/r.width*pad.width,(e.clientY-r.top)/r.height*pad.height];};
+  pad.addEventListener('pointerdown',e=>{e.preventDefault();drawing=true;try{pad.setPointerCapture(e.pointerId);}catch(_){}const p=pt(e);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(p[0]+.1,p[1]+.1);ctx.stroke();last=p;if(!st.hasInk){st.hasInk=true;refreshSubmit();}});
+  pad.addEventListener('pointermove',e=>{if(!drawing)return;const p=pt(e);ctx.beginPath();ctx.moveTo(last[0],last[1]);ctx.lineTo(p[0],p[1]);ctx.stroke();last=p;});
+  ['pointerup','pointerleave','pointercancel'].forEach(t=>pad.addEventListener(t,()=>{drawing=false;}));
+}
+function refreshSubmit(){
+  const b=document.getElementById('submitBtn'),h=document.getElementById('padHint');
+  if(b)b.disabled=!(st.signer.trim()!==''&&st.hasInk);
+  if(h)h.hidden=st.hasInk;
+}
+
+/* 入力 */
+app.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='draft'){st.draft=t.value;save();const n=document.getElementById('nextBtn');if(n)n.disabled=st.draft.trim()==='';}
+  if(t.id==='signer'){st.signer=t.value;save();refreshSubmit();}
+});
+app.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='f-date')set({fDate:t.value});
+  if(t.id==='f-status')set({fStatus:t.value});
+  if(t.id==='f-worker')set({fWorker:t.value});
+});
+
+const acts={
+  showIpad:()=>set({mode:'ipad'}), showViewer:()=>set({mode:'viewer'}),
+  setLand:()=>set({orient:'land'}), setPort:()=>set({orient:'port'}),
+  reset:()=>{st=initialState();save();render();},
+  pick:id=>set({selId:id}),
+  goStart:()=>set({screen:'startInput',draft:'',signer:'',hasInk:false}),
+  goEnd:()=>{const s=selRec();set({screen:'endInput',draft:'',signer:s.start?s.start.signer:'',hasInk:false});},
+  goHome:()=>set({screen:'home'}),
+  fillSample:()=>{const s=selRec();set({draft:(isStartFlow()?s.sTodo:s.sDone)||'作業内容（デモ用の例文）'});},
+  goSign:()=>{if(st.draft.trim())set({screen:isStartFlow()?'startSign':'endSign',hasInk:false});},
+  clearPad:()=>{if(pad&&ctx)ctx.clearRect(0,0,pad.width,pad.height);st.hasInk=false;refreshSubmit();},
+  backToInput:()=>set({screen:isStartFlow()?'startInput':'endInput',hasInk:false}),
+  submitSign:()=>{
+    if(!(st.signer.trim()&&st.hasInk))return;
+    const sf=isStartFlow(),s=selRec(),sig=pad?pad.toDataURL('image/png'):'',t=now();
+    const entry={todo:st.draft,signer:st.signer.trim(),sig:sig,dummy:'',time:t};
+    updateRecord(s.id,sf?{status:'doing',start:entry}:{status:'done',end:entry});
+    set({screen:sf?'startDone':'endDone',lastSig:sig,lastTime:t,lastSigner:st.signer.trim()});
+  },
+  openInViewer:()=>{const s=selRec();set({mode:'viewer',vScreen:'list',fDate:TODAY,fStatus:'all',fWorker:'all',flashId:s.id});},
+  open:id=>set({vScreen:'detail',detailId:id}),
+  backList:()=>set({vScreen:'list'})
+};
+app.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b||b.disabled)return;
+  const f=acts[b.dataset.act]; if(f)f(b.dataset.id);
+});
+
+render();
+if('serviceWorker' in navigator&&location.protocol!=='file:'){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+})();
+</script>
+</body>
+</html>
