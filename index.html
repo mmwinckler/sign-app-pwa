@@ -94,6 +94,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .pbtn.end{background:var(--green)}
 .pbtn.navy{background:var(--navy)}
 .pbtn:disabled{background:#DADFE5;color:#5C6470;cursor:not-allowed}
+.gbtn:disabled{opacity:.45;cursor:not-allowed}
 .gbtn{height:56px;padding:0 22px;border:2px solid #9AA6B5;border-radius:12px;background:#fff;color:var(--navy);font-size:18px;font-weight:500;display:inline-flex;align-items:center;gap:8px}
 .ta{width:100%;min-height:280px;padding:20px 22px;border:2px solid #9AA6B5;border-radius:14px;background:#fff;color:var(--navy);font-size:24px;line-height:1.7;resize:vertical}
 .ta:focus{border-color:var(--blue)}
@@ -146,7 +147,7 @@ body.standalone .orient{display:none!important}
 <div id="app"></div>
 <script>
 (function(){
-const TODAY='2026-10-15', ME='佐藤 健一', KEY='sign-demo-v2';
+const TODAY='2026-10-15', ME='佐藤 健一', KEY='sign-demo-v3';
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function initialRecords(){return [
@@ -166,14 +167,13 @@ function initialRecords(){return [
   start:{todo:'下見と保守計画の打合せ。',signer:'森 直樹',sig:'',dummy:'A',time:'13:05'},
   end:{todo:'現状確認と打合せ完了。翌日の定期保守内容を確定。',signer:'森 直樹',sig:'',dummy:'B',time:'15:20'}}
 ];}
-const CONTACTS={r1:['村上 聡','murakami@towa-seiki.example'],r2:['森 直樹','mori@kitagawa-kasei.example'],r3:['山口 浩二','yamaguchi@mitsuboshi-kinzoku.example'],r4:['小林 恵','kobayashi@yamato-pkg.example'],r5:['石井 美和','ishii@chubu-seiko.example'],r6:['森 直樹','mori@kitagawa-kasei.example']};
 function seed(recs){return recs.map(r=>{
-  const c=CONTACTS[r.id]||['',''], x=Object.assign({},r,{contact:c[0],contactEmail:c[1],pre:null});
-  if(r.id==='r2')x.pre={todo:r.sTodo,approver:c[0],email:c[1],requestedAt:'10/14 17:05',state:'approved',decidedAt:'10/14 18:22',decidedBy:'森 直樹',comment:''};
-  if(r.id==='r3')x.pre={todo:r.start.todo,approver:c[0],email:c[1],requestedAt:'10/14 15:40',state:'approved',decidedAt:'10/14 16:02',decidedBy:'山口 浩二',comment:''};
-  if(r.id==='r5')x.pre={todo:'CNC旋盤の定期点検。\n主軸の振れ測定、ATCの動作確認、切削油の交換。',approver:c[0],email:c[1],requestedAt:'10/15 07:50',state:'requested'};
+  const x=Object.assign({},r,{pre:null,preEnd:null});
+  if(r.id==='r2')x.pre={todo:r.sTodo,savedAt:'10/14 17:05'};
+  if(r.id==='r3')x.pre={todo:r.start.todo,savedAt:'10/14 15:40'};
+  if(r.id==='r5')x.pre={todo:'CNC旋盤の定期点検。\n主軸の振れ測定、ATCの動作確認、切削油の交換。',savedAt:'10/15 07:50'};
   return x;});}
-function initialState(){return {preId:'r1',preTodo:'',preApprover:'',preEmail:'',preMsg:'',apMsg:'',mode:'ipad',orient:'land',screen:'home',selId:'r1',draft:'',signer:'',hasInk:false,lastSig:'',lastTime:'',lastSigner:'',vScreen:'list',detailId:null,fDate:TODAY,fStatus:'all',fWorker:'all',records:seed(initialRecords()),flashId:null};}
+function initialState(){return {preId:'r1',preTodo:'',preMsg:'',preKind:'start',preDraft:'',mode:'ipad',orient:'land',screen:'home',selId:'r1',draft:'',signer:'',hasInk:false,lastSig:'',lastTime:'',lastSigner:'',vScreen:'list',detailId:null,fDate:TODAY,fStatus:'all',fWorker:'all',records:seed(initialRecords()),flashId:null};}
 
 let st;
 try{const raw=localStorage.getItem(KEY); st=raw?Object.assign(initialState(),JSON.parse(raw)):initialState();}catch(e){st=initialState();}
@@ -187,10 +187,9 @@ const pillCls=s=>'pill '+(s==='doing'?'b-doing':s==='done'?'b-done':'b-todo');
 const dateLabel=d=>d==='2026-10-15'?'2026-10-15（木）':'2026-10-14（水）';
 const nl=s=>esc(s);
 const stamp=()=>{const d=new Date();return (d.getMonth()+1)+'/'+d.getDate()+' '+now();};
-const PRE={none:['未依頼','b-todo'],requested:['承認待ち','b-wait'],approved:['承認済み','b-done'],rejected:['差戻し','b-ng']};
-const preState=r=>r.pre?r.pre.state:'none';
-const prePill=(r,small)=>{const p=PRE[preState(r)];return `<span class="pill ${p[1]}"${small?' style="height:26px;font-size:13px"':''}>事前承認：${p[0]}</span>`;};
-const preLabel=r=>PRE[preState(r)][0];
+const hasPre=r=>!!(r.pre&&r.pre.todo.trim());
+const preLabel=r=>hasPre(r)?'入力済み':'未入力';
+const preCls=r=>hasPre(r)?'b-doing':'b-todo';
 
 const IC={
  logo:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-4 5 2 8-2s4-6 7-3"></path><path d="M3 21h18"></path></svg>',
@@ -202,12 +201,12 @@ const IC={
  mic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D4F9C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path></svg>',
  redo:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"></path><path d="M4 4v4h4"></path></svg>',
  ok:'<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>',
+ pen:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg>',
  doc:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M9 12h7M9 16h5"></path></svg>',
  dummyA:'<svg width="190" height="70" viewBox="0 0 240 80" fill="none" stroke="#1A1A1A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="署名"><path d="M14 52c10-30 22-34 26-18s-6 30 4 22 14-34 22-30-4 30 6 28 12-20 20-22 2 18 10 20 16-24 26-26"></path><path d="M150 30c-8 14-6 28 6 22s18-26 28-20-8 24 4 22 20-16 36-14"></path></svg>',
  dummyB:'<svg width="190" height="70" viewBox="0 0 240 80" fill="none" stroke="#1A1A1A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="署名"><path d="M20 40c14-22 30-22 26 0s-16 26 0 18 20-36 32-30-10 34 4 30 24-28 34-24"></path><path d="M134 54c6-26 16-32 22-24s-10 24 2 22 22-30 30-26 0 22 12 20 14-10 22-12"></path></svg>'
 };
 
-const preUnchanged=r=>!!(r.pre&&r.pre.state==='approved'&&r.pre.todo.trim()===st.draft.trim());
 function updateRecord(id,patch){st.records=st.records.map(r=>r.id===id?Object.assign({},r,patch):r);}
 function mine(){return st.records.filter(r=>r.worker===ME&&r.date===TODAY);}
 function selRec(){return st.records.find(r=>r.id===st.selId)||mine()[0];}
@@ -235,7 +234,7 @@ function ipadHTML(){
         <span style="font-size:25px;font-weight:700;line-height:1.35">${esc(r.customer)} ${esc(r.site)}</span>
         <span style="font-size:17px;color:#39414D">${esc(r.address)}</span>
         <span style="display:flex;align-items:center;gap:8px;font-size:17px;color:#14243B">${IC.machine}${esc(r.machine)}</span>
-        ${r.status==='todo'?`<span>${prePill(r,true)}</span>`:''}</button>`;
+        ${r.status!=='done'?`<span style="display:flex;gap:8px;flex-wrap:wrap">${r.status==='todo'?`<span class="pill ${preCls(r)}" style="height:26px;font-size:13px">作業内容：${preLabel(r)}</span>`:''}${r.preEnd&&r.preEnd.text.trim()?'<span class="pill b-done" style="height:26px;font-size:13px">やったこと：入力済み</span>':''}</span>`:''}</button>`;
     }).join('');
     let hint='';
     if(sel.status==='todo')hint='現場に到着したら「開始」を押してください';
@@ -247,21 +246,23 @@ function ipadHTML(){
       <div style="display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:4px">
         <div style="font-size:19px;color:#39414D">選択中：<strong style="color:#14243B">${esc(sel.customer)} ${esc(sel.site)}</strong></div>
         <div style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center">
-          <button class="bigbtn start" data-act="goStart" ${sel.status!=='todo'?'disabled':''}>${IC.play}<span style="font-size:44px;font-weight:700;line-height:1">開始</span><span style="font-size:17px">作業内容の確認・署名</span></button>
-          <button class="bigbtn end" data-act="goEnd" ${sel.status!=='doing'?'disabled':''}>${IC.check}<span style="font-size:44px;font-weight:700;line-height:1">終了</span><span style="font-size:17px">本日の作業終了の了承</span></button>
+          <div style="display:flex;flex-direction:column;gap:12px;align-items:stretch">
+            <button class="bigbtn start" data-act="goStart" ${sel.status!=='todo'?'disabled':''}>${IC.play}<span style="font-size:44px;font-weight:700;line-height:1">開始</span><span style="font-size:17px">作業内容の確認・署名</span></button>
+            <button class="gbtn" style="justify-content:center" data-act="preStart" ${sel.status!=='todo'?'disabled':''}>${IC.pen}${hasPre(sel)?'作業内容を編集（入力済み）':'作業内容を事前入力'}</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;align-items:stretch">
+            <button class="bigbtn end" data-act="goEnd" ${sel.status!=='doing'?'disabled':''}>${IC.check}<span style="font-size:44px;font-weight:700;line-height:1">終了</span><span style="font-size:17px">本日の作業終了の了承</span></button>
+            <button class="gbtn" style="justify-content:center" data-act="preEnd" ${sel.status==='done'?'disabled':''}>${IC.pen}${sel.preEnd&&sel.preEnd.text.trim()?'やったことを編集（入力済み）':'やったことを事前入力'}</button>
+          </div>
         </div>
         <div style="font-size:17px;color:#4A5668">${hint}</div>
       </div></div>`;
   }else if(scr==='startInput'||scr==='endInput'){
     const endBox=scr==='endInput'?`<div style="padding:18px 22px;border-radius:12px;background:#E6EAF0"><div style="font-size:15px;font-weight:700;color:#39414D">朝の「今日やること」（${esc(sel.start.time)} 開始・${esc(sel.start.signer)} 様 署名済み）</div><div style="font-size:19px;line-height:1.7;margin-top:6px;white-space:pre-wrap">${nl(sel.start.todo)}</div></div>`:'';
     let preBox='';
-    if(scr==='startInput'){
-      const pr=sel.pre, ps=preState(sel), big='font-size:17px';
-      if(ps==='approved')preBox=`<div class="banner ok" style="${big}">事前入力の内容を表示しています。<strong>${esc(pr.decidedBy)} 様が ${esc(pr.decidedAt)} に承認済み</strong>です。内容を変えた場合は、この後のお客様確認で変更後の内容をご確認いただきます。</div>`;
-      else if(ps==='requested')preBox=`<div class="banner wait" style="${big}">事前入力の内容を表示しています。${esc(pr.approver)} 様の<strong>承認がまだ</strong>のため、この後の現場確認で内容をご確認いただきます。</div>`;
-      else if(ps==='rejected')preBox=`<div class="banner ng" style="${big}"><strong>${esc(pr.decidedBy)} 様から差戻し</strong>：${esc(pr.comment)}<br>内容を見直して入力してください。</div>`;
-      else preBox=`<div class="banner info" style="${big}">事前入力はありません。ここで入力してください。</div>`;
-    }
+    const big='font-size:17px';
+    if(scr==='startInput')preBox=hasPre(sel)?`<div class="banner info" style="${big}">事前入力した作業内容（${esc(sel.pre.savedAt)} 保存）を表示しています。必要なら修正してください。</div>`:'';
+    if(scr==='endInput')preBox=sel.preEnd&&sel.preEnd.text.trim()?`<div class="banner info" style="${big}">事前入力した内容（${esc(sel.preEnd.savedAt)} 保存）を表示しています。必要なら修正してください。</div>`:'';
     body=`<div class="scr-body" style="padding:28px 36px;display:flex;flex-direction:column;gap:20px">
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><button class="gbtn" data-act="goHome">${IC.back(20)}ホーム</button><div class="${sf?'pill b-doing':'pill b-done'}">${sf?'開始　1 / 2　今日やること':'終了　1 / 2　今日やったこと'}</div><div style="font-size:17px;color:#4A5668">${esc(sel.customer)} ${esc(sel.site)}｜${esc(sel.machine)}</div></div>
       ${endBox}${preBox}
@@ -276,6 +277,22 @@ function ipadHTML(){
         <div class="spacer"></div>
         <button id="nextBtn" class="${sf?'pbtn start':'pbtn end'}" data-act="goSign" ${st.draft.trim()===''?'disabled':''}>次へ：お客様の確認${IC.next}</button>
       </div></div>`;
+  }else if(scr==='preInput'){
+    const ks=st.preKind==='start';
+    body=`<div class="scr-body" style="padding:28px 36px;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><button class="gbtn" data-act="goHome">${IC.back(20)}ホーム</button><div class="pill b-todo">${ks?'事前入力　開始時の作業内容':'事前入力　終了時のやったこと'}</div><div style="font-size:17px;color:#4A5668">${esc(sel.customer)} ${esc(sel.site)}｜${esc(sel.machine)}</div></div>
+      <div class="banner info" style="font-size:17px">ここで保存した内容は、${ks?'「開始」':'「終了」'}を押したときの入力欄にあらかじめ入ります。お客様への確認や署名は、${ks?'開始':'終了'}時に現場で行います。</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <label for="preDraft" style="font-size:26px;font-weight:700">${ks?'今日やること':'今日やったこと'}</label>
+        <textarea id="preDraft" class="ta" placeholder="${ks?'本日の作業内容を入力してください（音声入力も使えます）':'実施した作業・残件を入力してください（音声入力も使えます）'}">${esc(st.preDraft)}</textarea>
+        <div style="display:flex;align-items:center;gap:10px;font-size:17px;color:#39414D">${IC.mic}マイクで音声入力できます（キーボードのマイクボタンを押して話してください）</div>
+      </div>
+      <div class="spacer"></div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <button class="gbtn" style="font-size:15px;height:48px;border-style:dashed" data-act="preIpadSample">デモ用の例文を入れる</button>
+        <div class="spacer"></div>
+        <button class="pbtn navy" data-act="preIpadSave">保存してホームに戻る</button>
+      </div></div>`;
   }else if(isSign){
     const todo=sf?st.draft:sel.start.todo;
     const done=!sf?`<div style="padding:18px 22px;background:#fff;border:2px solid #17663F;border-radius:12px"><div style="font-size:17px;font-weight:700;color:#17663F">今日やったこと</div><div style="font-size:22px;line-height:1.75;margin-top:6px;white-space:pre-wrap">${nl(st.draft)}</div></div>`:'';
@@ -284,7 +301,7 @@ function ipadHTML(){
       <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
         <div style="flex:1 1 460px;min-width:0;display:flex;flex-direction:column;gap:16px">
           <div style="display:grid;grid-template-columns:96px 1fr;row-gap:6px;column-gap:12px;font-size:18px;padding:16px 20px;background:#fff;border:1px solid #D9CDB5;border-radius:12px"><div style="color:#6A5F4E">日付</div><div>2026年10月15日（木）</div><div style="color:#6A5F4E">現場</div><div>${esc(sel.customer)} ${esc(sel.site)}</div><div style="color:#6A5F4E">対象機械</div><div>${esc(sel.machine)}</div></div>
-          <div style="padding:18px 22px;background:#fff;border:1px solid #D9CDB5;border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:17px;font-weight:700;color:#6A5F4E">今日やること</div>${sf&&preUnchanged(sel)?`<span class="pill b-done" style="height:28px;font-size:14px">${esc(sel.pre.decidedBy)} 様 事前承認済み（${esc(sel.pre.decidedAt)}）</span>`:''}</div><div style="font-size:22px;line-height:1.75;margin-top:6px;white-space:pre-wrap">${nl(todo)}</div></div>
+          <div style="padding:18px 22px;background:#fff;border:1px solid #D9CDB5;border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:17px;font-weight:700;color:#6A5F4E">今日やること</div></div><div style="font-size:22px;line-height:1.75;margin-top:6px;white-space:pre-wrap">${nl(todo)}</div></div>
           ${done}
         </div>
         <div style="flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:14px">
@@ -326,78 +343,40 @@ function sigCell(e,label){
   return e.dummy==='A'?IC.dummyA:IC.dummyB;
 }
 function preCard(d){
-  const p=d.pre, ps=preState(d);
-  let body='<div class="fv">事前入力はありません</div>';
-  if(p){
-    body=`<div class="grid3">
-      <div><div class="fl">承認依頼先</div><div class="fv">${esc(p.approver)} 様<br><span style="font-size:13px;color:#5A6472">${esc(p.email)}</span></div></div>
-      <div><div class="fl">依頼日時</div><div class="fv">${esc(p.requestedAt)}</div></div>
-      <div><div class="fl">${ps==='rejected'?'差戻し':'承認'}日時</div><div class="fv">${p.decidedAt?esc(p.decidedAt)+'（'+esc(p.decidedBy)+' 様）':'—'}</div></div>
+  const pe=d.preEnd&&d.preEnd.text.trim()?d.preEnd:null;
+  const changed=hasPre(d)&&d.start&&d.start.todo.trim()!==d.pre.todo.trim();
+  return `<div style="background:#fff;border:1px solid #DCE1E7;border-top:4px solid #8A94A3;border-radius:8px;padding:18px 22px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div style="font-size:16px;font-weight:700;color:#39414D">事前入力</div><span class="pill ${preCls(d)}" style="height:28px;font-size:13px">${preLabel(d)}</span></div>
+    <div class="grid2">
+      <div><div class="fl">今日やること${hasPre(d)?'（'+esc(d.pre.savedAt)+' 保存）':''}</div><div class="fv">${hasPre(d)?nl(d.pre.todo):'未入力'}</div></div>
+      <div><div class="fl">今日やったこと${pe?'（'+esc(pe.savedAt)+' 保存）':''}</div><div class="fv">${pe?nl(pe.text):'未入力'}</div></div>
     </div>
-    <div><div class="fl">事前入力した今日やること</div><div class="fv">${nl(p.todo)}</div></div>
-    ${ps==='rejected'?`<div class="banner ng">差戻しコメント：${esc(p.comment)}</div>`:''}
-    ${d.start&&d.start.todo.trim()!==p.todo.trim()?'<div class="banner wait">現場で内容が変更されています（開始欄が現場で署名された内容です）。</div>':''}`;
-  }
-  return `<div style="background:#fff;border:1px solid #DCE1E7;border-top:4px solid #B7791F;border-radius:8px;padding:18px 22px;display:flex;flex-direction:column;gap:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div style="font-size:16px;font-weight:700;color:#8A5A12">事前入力・承認</div><span class="pill ${PRE[ps][1]}" style="height:28px;font-size:13px">${PRE[ps][0]}</span></div>
-    ${body}</div>`;
+    ${changed?'<div class="banner wait">開始時に現場で内容が修正されています（開始欄がお客様の署名をいただいた内容です）。</div>':''}</div>`;
 }
 
 /* ---------- 事前入力（作業員・PC） ---------- */
 function preHTML(){
   const list=st.records.filter(r=>r.date===TODAY).map(r=>`<button class="pitem${r.id===st.preId?' sel':''}" data-act="prePick" data-id="${r.id}" aria-pressed="${r.id===st.preId}">
-      <span class="top"><span>${r.date.slice(5).replace('-','/')}　予定 ${esc(r.plan)}</span><span class="pill ${PRE[preState(r)][1]}" style="height:24px;font-size:12px;padding:0 10px">${preLabel(r)}</span></span>
+      <span class="top"><span>${r.date.slice(5).replace('-','/')}　予定 ${esc(r.plan)}</span><span class="pill ${preCls(r)}" style="height:24px;font-size:12px;padding:0 10px">${preLabel(r)}</span></span>
       <span style="font-size:17px;font-weight:700">${esc(r.customer)} ${esc(r.site)}</span>
       <span style="font-size:13px;color:#4A5668">${esc(r.machine)}　担当 ${esc(r.worker)}</span></button>`).join('');
-  const r=st.records.find(x=>x.id===st.preId)||st.records[0], ps=preState(r), p=r.pre;
-  let status='';
-  if(ps==='requested')status=`<div class="banner wait">${esc(p.approver)} 様に ${esc(p.requestedAt)} 承認を依頼済みです。返答を待っています。</div>`;
-  if(ps==='approved')status=`<div class="banner ok">${esc(p.decidedBy)} 様が ${esc(p.decidedAt)} に承認しました。当日はこの内容がiPadに表示されます。</div>`;
-  if(ps==='rejected')status=`<div class="banner ng">${esc(p.decidedBy)} 様から差戻しがありました（${esc(p.decidedAt)}）：${esc(p.comment)}</div>`;
+  const r=st.records.find(x=>x.id===st.preId)||st.records[0];
   const locked=r.status!=='todo';
   const form=locked?`<div class="banner info">この現場はすでに作業を開始しているため、事前入力は変更できません。</div>`:`
-    <label class="flbl" for="preTodo">今日やること（作業予定）</label>
+    ${hasPre(r)?`<div class="banner info">${esc(r.pre.savedAt)} に保存済みです。</div>`:''}
+    <label class="flbl" for="preTodo">今日やること（作業内容）</label>
     <textarea id="preTodo" class="fta" placeholder="当日の作業内容を入力してください">${esc(st.preTodo)}</textarea>
     <div class="btnrow"><button class="gbtn" style="font-size:14px;height:40px;border-style:dashed" data-act="preSample">デモ用の例文を入れる</button></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
-      <div style="display:flex;flex-direction:column;gap:6px"><label class="flbl" for="preApprover">承認をお願いするお客様ご担当者</label><input id="preApprover" class="fin" value="${esc(st.preApprover)}" placeholder="例：山田 太郎" autocomplete="off"></div>
-      <div style="display:flex;flex-direction:column;gap:6px"><label class="flbl" for="preEmail">送信先メールアドレス</label><input id="preEmail" class="fin" type="email" value="${esc(st.preEmail)}" placeholder="example@customer.co.jp" autocomplete="off"></div>
-    </div>
-    <div class="btnrow"><button id="preSubmit" class="mbtn" data-act="preRequest" ${preReady()?'':'disabled'}>${ps==='none'?'お客様に承認を依頼する':'内容を更新して再依頼する'}</button><span class="ph">デモのため実際のメールは送信されません</span></div>
-    ${st.preMsg?`<div class="banner ok">${esc(st.preMsg)}　<button class="linkbtn" data-act="showApprove">お客様ご担当者の画面を見る</button></div>`:''}`;
+    <div class="btnrow"><button id="preSubmit" class="mbtn" data-act="preSave" ${st.preTodo.trim()?'':'disabled'}>保存する</button><span class="ph">保存した内容は、iPadで「開始」を押したときの入力欄に入ります</span></div>
+    ${st.preMsg?`<div class="banner ok">${esc(st.preMsg)}${r.worker===ME?`　<button class="linkbtn" data-act="openInIpad" data-id="${r.id}">iPadの画面で見る</button>`:''}</div>`:''}`;
   return `<div class="stagewrap"><div class="pre">
-    <div class="panel"><div style="font-size:20px;font-weight:700">事前入力</div><div class="ph" style="color:#4A5668">前日までに作業予定を入力し、お客様ご担当者に承認を依頼します。</div><div class="plist">${list}</div></div>
+    <div class="panel"><div style="font-size:20px;font-weight:700">事前入力</div><div class="ph" style="color:#4A5668">前日までに当日の作業内容を入力しておくと、現場では確認と署名だけで開始できます。</div><div class="plist">${list}</div></div>
     <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div><div style="font-size:13px;color:#4A5668">${dateLabel(r.date)}　予定 ${esc(r.plan)}　担当 ${esc(r.worker)}</div><div style="font-size:22px;font-weight:700;margin-top:4px">${esc(r.customer)} ${esc(r.site)}</div><div style="font-size:14px;color:#39414D;margin-top:2px">${esc(r.machine)}</div></div>${prePill(r,true)}</div>
-      ${status}${form}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div><div style="font-size:13px;color:#4A5668">${dateLabel(r.date)}　予定 ${esc(r.plan)}　担当 ${esc(r.worker)}</div><div style="font-size:22px;font-weight:700;margin-top:4px">${esc(r.customer)} ${esc(r.site)}</div><div style="font-size:14px;color:#39414D;margin-top:2px">${esc(r.machine)}</div></div><span class="pill ${preCls(r)}" style="height:26px;font-size:13px">作業内容：${preLabel(r)}</span></div>
+      ${form}
     </div></div></div>`;
 }
-function preReady(){return st.preTodo.trim()!==''&&st.preApprover.trim()!=='';}
-function loadPre(id){const r=st.records.find(x=>x.id===id);const p=r&&r.pre;return {preId:id,preTodo:p?p.todo:'',preApprover:p?p.approver:(r.contact||''),preEmail:p?p.email:(r.contactEmail||''),preMsg:''};}
-
-/* ---------- お客様ご担当者（承認） ---------- */
-function approveHTML(){
-  const pend=st.records.filter(r=>r.pre&&r.pre.state==='requested');
-  const done=st.records.filter(r=>r.pre&&r.pre.state!=='requested');
-  const kv=r=>`<div class="kv"><div>作業日</div><div>${dateLabel(r.date)}　${esc(r.plan)}</div><div>現場</div><div>${esc(r.customer)} ${esc(r.site)}</div><div>対象機械</div><div>${esc(r.machine)}</div><div>作業担当</div><div>${esc(r.worker)}</div></div>`;
-  const cards=pend.map(r=>`<div class="acard">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:15px;color:#6A5F4E">${esc(r.pre.approver)} 様あて　${esc(r.pre.requestedAt)} 受信</div><span class="pill b-wait" style="height:28px;font-size:14px">ご確認待ち</span></div>
-      ${kv(r)}
-      <div style="padding:16px 18px;background:#FBF8F1;border:1px solid #D9CDB5;border-radius:10px"><div style="font-size:15px;font-weight:700;color:#6A5F4E">今日やること（作業予定）</div><div style="font-size:19px;line-height:1.75;margin-top:6px;white-space:pre-wrap">${nl(r.pre.todo)}</div></div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
-        <div style="display:flex;flex-direction:column;gap:6px"><label class="flbl" for="apName-${r.id}">ご担当者のお名前</label><input id="apName-${r.id}" class="fin" value="${esc(r.pre.approver)}" autocomplete="off"></div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px"><label class="flbl" for="apCmt-${r.id}">コメント（差し戻す場合は理由をご記入ください）</label><textarea id="apCmt-${r.id}" class="fta" style="min-height:80px" placeholder="例：安全装置の確認も追加してください"></textarea></div>
-      <div class="btnrow"><button class="mbtn green" data-act="approve" data-id="${r.id}">この内容で承認する</button><button class="mbtn ghost" data-act="reject" data-id="${r.id}">差し戻す</button><span id="apErr-${r.id}" class="ph" style="color:#7A1F1F"></span></div>
-    </div>`).join('');
-  const hist=done.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:#fff;border:1px solid #D9CDB5;border-radius:10px;font-size:15px"><span>${dateLabel(r.date)}　${esc(r.customer)} ${esc(r.site)}</span><span style="display:flex;gap:10px;align-items:center"><span class="ph">${esc(r.pre.decidedAt||'')} ${esc(r.pre.decidedBy||'')} 様</span><span class="pill ${PRE[r.pre.state][1]}" style="height:26px;font-size:13px">${PRE[r.pre.state][0]}</span></span></div>`).join('');
-  return `<div class="stagewrap cust" style="min-height:100%"><div class="mail">
-    <div class="mailhead"><div style="height:34px;padding:0 14px;border-radius:17px;background:#1E1A14;color:#FBF8F1;display:flex;align-items:center;font-size:15px;font-weight:700">作業内容の事前確認</div><div style="font-size:15px;color:#4F4638">メールのリンクから開くお客様ご担当者向けの画面です</div></div>
-    ${st.apMsg?`<div class="banner ok" style="font-size:16px">${esc(st.apMsg)}</div>`:''}
-    ${cards||'<div class="acard" style="text-align:center;color:#6A5F4E;font-size:17px">ご確認待ちの作業予定はありません</div>'}
-    ${hist?`<div style="font-size:16px;font-weight:700;margin-top:6px">これまでのご確認</div>${hist}`:''}
-  </div></div>`;
-}
+function loadPre(id){const r=st.records.find(x=>x.id===id);return {preId:id,preTodo:r&&r.pre?r.pre.todo:'',preMsg:''};}
 
 function viewerHTML(){
   let inner='';
@@ -412,7 +391,7 @@ function viewerHTML(){
       <div style="line-height:1.4;padding-top:6px;padding-bottom:6px">${esc(r.site)}<br><span style="font-size:12px;color:#5A6472">${esc(r.address)}</span></div>
       <div>${esc(r.worker)}</div>
       <div><span class="${pillCls(r.status)}" style="height:28px;font-size:13px">${statusLabel(r.status)}</span></div>
-      <div><span class="pill ${PRE[preState(r)][1]}" style="height:28px;font-size:13px">${preLabel(r)}</span></div>
+      <div><span class="pill ${preCls(r)}" style="height:28px;font-size:13px">${preLabel(r)}</span></div>
       <div style="font-variant-numeric:tabular-nums">${r.start?r.start.time:'—'}</div>
       <div style="font-variant-numeric:tabular-nums">${r.end?r.end.time:'—'}</div></div>`).join('');
     inner=`<div class="vbody">
@@ -429,7 +408,7 @@ function viewerHTML(){
         </div>
       </div>
       <div class="tablebox"><div style="min-width:1160px">
-        <div class="row head"><div></div><div>日付</div><div>客先名</div><div>現場</div><div>担当作業員</div><div>ステータス</div><div>事前承認</div><div>開始時刻</div><div>終了時刻</div></div>
+        <div class="row head"><div></div><div>日付</div><div>客先名</div><div>現場</div><div>担当作業員</div><div>ステータス</div><div>事前入力</div><div>開始時刻</div><div>終了時刻</div></div>
         ${rows||'<div style="padding:40px;text-align:center;color:#5A6472;font-size:14px">条件に一致するレコードはありません</div>'}
       </div></div></div>`;
   }else{
@@ -457,17 +436,17 @@ function viewerHTML(){
     <div class="portal"><div style="width:26px;height:26px;border-radius:6px;background:#E8B04A"></div><div style="font-weight:700">社内業務アプリ</div><div style="color:#B9C3CF">›</div><div>現場作業署名</div><div class="spacer"></div><div style="color:#D7DEE6">情報システム課 閲覧</div></div>
     <div class="apphead"><div style="width:40px;height:40px;border-radius:8px;background:#E5EEF9;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D4F9C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-4 5 2 8-2s4-6 7-3"></path><path d="M3 21h18"></path></svg></div><div style="font-size:20px;font-weight:700">現場作業署名</div><div style="font-size:13px;color:#5A6472">署名アプリの開始・終了記録</div></div>
     ${inner}</div>
-    <div class="note">事前入力・承認、署名アプリでの開始・終了の署名は、この一覧にすぐ反映されます。データはこの端末のブラウザ内にだけ保存されます。</div></div>`;
+    <div class="note">事前入力や、署名アプリでの開始・終了の署名は、この一覧にすぐ反映されます。データはこの端末のブラウザ内にだけ保存されます。</div></div>`;
 }
 
 /* ---------- 描画 ---------- */
 const app=document.getElementById('app');
 function render(){
   const bar=`<div class="demobar"><div class="lbl">デモ切替</div>
-    <div class="tabs"><button class="tab${st.mode==='ipad'?' on':''}" data-act="showIpad">署名アプリ（iPad）</button><button class="tab${st.mode==='pre'?' on':''}" data-act="showPre">事前入力</button><button class="tab${st.mode==='approve'?' on':''}" data-act="showApprove">お客様承認</button><button class="tab${st.mode==='viewer'?' on':''}" data-act="showViewer">閲覧側（社内）</button></div>
+    <div class="tabs"><button class="tab${st.mode==='ipad'?' on':''}" data-act="showIpad">署名アプリ（iPad）</button><button class="tab${st.mode==='pre'?' on':''}" data-act="showPre">事前入力</button><button class="tab${st.mode==='viewer'?' on':''}" data-act="showViewer">閲覧側（社内）</button></div>
     ${st.mode==='ipad'?`<div class="orient" style="display:flex;align-items:center;gap:8px"><span style="color:#AFBACA;font-size:14px">iPadの向き</span><button class="chipbtn${st.orient==='land'?' on':''}" data-act="setLand">横</button><button class="chipbtn${st.orient==='port'?' on':''}" data-act="setPort">縦</button></div>`:''}
     <div class="spacer"></div>${navigator.onLine?'':'<span class="offline">オフライン</span>'}<button class="chipbtn" data-act="reset">デモを初期状態に戻す</button></div>`;
-  app.innerHTML=bar+(st.mode==='ipad'?ipadHTML():st.mode==='pre'?preHTML():st.mode==='approve'?approveHTML():viewerHTML());
+  app.innerHTML=bar+(st.mode==='ipad'?ipadHTML():st.mode==='pre'?preHTML():viewerHTML());
   fit(); setupPad(); st.flashId=null;
 }
 const STANDALONE=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true||/[?&]app=1/.test(location.search);
@@ -508,7 +487,8 @@ app.addEventListener('input',e=>{
   const t=e.target;
   if(t.id==='draft'){st.draft=t.value;save();const n=document.getElementById('nextBtn');if(n)n.disabled=st.draft.trim()==='';}
   if(t.id==='signer'){st.signer=t.value;save();refreshSubmit();}
-  if(t.id==='preTodo'||t.id==='preApprover'||t.id==='preEmail'){st[t.id]=t.value;save();const b=document.getElementById('preSubmit');if(b)b.disabled=!preReady();}
+  if(t.id==='preTodo'){st.preTodo=t.value;save();const b=document.getElementById('preSubmit');if(b)b.disabled=!st.preTodo.trim();}
+  if(t.id==='preDraft'){st.preDraft=t.value;save();}
 });
 app.addEventListener('change',e=>{
   const t=e.target;
@@ -517,34 +497,31 @@ app.addEventListener('change',e=>{
   if(t.id==='f-worker')set({fWorker:t.value});
 });
 
-function decide(id,ok){
-  const r=st.records.find(x=>x.id===id); if(!r||!r.pre)return;
-  const name=(document.getElementById('apName-'+id)||{}).value||'', cmt=(document.getElementById('apCmt-'+id)||{}).value||'';
-  const err=document.getElementById('apErr-'+id);
-  if(!name.trim()){if(err)err.textContent='お名前を入力してください';return;}
-  if(!ok&&!cmt.trim()){if(err)err.textContent='差し戻す理由をご記入ください';return;}
-  updateRecord(id,{pre:Object.assign({},r.pre,{state:ok?'approved':'rejected',decidedAt:stamp(),decidedBy:name.trim(),comment:cmt.trim()})});
-  set({apMsg:ok?'承認しました。作業担当者に通知されます。':'差し戻しました。作業担当者に通知されます。'});
-}
 const acts={
   showIpad:()=>set({mode:'ipad'}), showViewer:()=>set({mode:'viewer'}),
   showPre:()=>set(Object.assign({mode:'pre'},loadPre(st.preId))),
-  showApprove:()=>set({mode:'approve',apMsg:''}),
   prePick:id=>set(loadPre(id)),
   preSample:()=>{const r=st.records.find(x=>x.id===st.preId);set({preTodo:(r&&r.sTodo)||'作業内容（デモ用の例文）'});},
-  preRequest:()=>{
-    if(!preReady())return;
-    const r=st.records.find(x=>x.id===st.preId);
-    updateRecord(r.id,{pre:{todo:st.preTodo.trim(),approver:st.preApprover.trim(),email:st.preEmail.trim(),requestedAt:stamp(),state:'requested'}});
-    set({preMsg:st.preApprover.trim()+' 様に承認を依頼しました。'});
+  preSave:()=>{
+    if(!st.preTodo.trim())return;
+    updateRecord(st.preId,{pre:{todo:st.preTodo.trim(),savedAt:stamp()}});
+    set({preMsg:'保存しました。'});
   },
-  approve:id=>decide(id,true),
-  reject:id=>decide(id,false),
+  openInIpad:id=>set({mode:'ipad',screen:'home',selId:id}),
+  preStart:()=>{const r=selRec();set({screen:'preInput',preKind:'start',preDraft:r.pre?r.pre.todo:''});},
+  preEnd:()=>{const r=selRec();set({screen:'preInput',preKind:'end',preDraft:r.preEnd?r.preEnd.text:''});},
+  preIpadSample:()=>{const r=selRec();set({preDraft:(st.preKind==='start'?r.sTodo:r.sDone)||'作業内容（デモ用の例文）'});},
+  preIpadSave:()=>{
+    const r=selRec(),t=st.preDraft.trim();
+    if(st.preKind==='start')updateRecord(r.id,{pre:t?{todo:t,savedAt:stamp()}:null});
+    else updateRecord(r.id,{preEnd:t?{text:t,savedAt:stamp()}:null});
+    set({screen:'home'});
+  },
   setLand:()=>set({orient:'land'}), setPort:()=>set({orient:'port'}),
   reset:()=>{st=initialState();save();render();},
   pick:id=>set({selId:id}),
-  goStart:()=>{const r=selRec();set({screen:'startInput',draft:(r.pre&&r.pre.state!=='rejected')?r.pre.todo:'',signer:(r.pre&&r.pre.state==='approved')?r.pre.decidedBy:'',hasInk:false});},
-  goEnd:()=>{const s=selRec();set({screen:'endInput',draft:'',signer:s.start?s.start.signer:'',hasInk:false});},
+  goStart:()=>{const r=selRec();set({screen:'startInput',draft:hasPre(r)?r.pre.todo:'',signer:'',hasInk:false});},
+  goEnd:()=>{const s=selRec();set({screen:'endInput',draft:s.preEnd?s.preEnd.text:'',signer:s.start?s.start.signer:'',hasInk:false});},
   goHome:()=>set({screen:'home'}),
   fillSample:()=>{const s=selRec();set({draft:(isStartFlow()?s.sTodo:s.sDone)||'作業内容（デモ用の例文）'});},
   goSign:()=>{if(st.draft.trim())set({screen:isStartFlow()?'startSign':'endSign',hasInk:false});},
@@ -553,7 +530,7 @@ const acts={
   submitSign:()=>{
     if(!(st.signer.trim()&&st.hasInk))return;
     const sf=isStartFlow(),s=selRec(),sig=pad?pad.toDataURL('image/png'):'',t=now();
-    const entry={todo:st.draft,signer:st.signer.trim(),sig:sig,dummy:'',time:t,preApproved:sf&&preUnchanged(s)};
+    const entry={todo:st.draft,signer:st.signer.trim(),sig:sig,dummy:'',time:t};
     updateRecord(s.id,sf?{status:'doing',start:entry}:{status:'done',end:entry});
     set({screen:sf?'startDone':'endDone',lastSig:sig,lastTime:t,lastSigner:st.signer.trim()});
   },
